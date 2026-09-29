@@ -645,7 +645,11 @@ else:
                 pose_result = st.session_state.pose_detector.process_frame(raw_frame)
             else:
                 raw_frame = np.zeros((sys_config.CAMERA_HEIGHT, sys_config.CAMERA_WIDTH, 3), dtype=np.uint8)
-                cv2.putText(raw_frame, "WEBCAM CONNECTING...", (130, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 200, 255), 2)
+                if not st.session_state.camera_mgr.is_hardware_available:
+                    cv2.putText(raw_frame, "NO WEBCAM HARDWARE DETECTED", (80, 220), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 200, 255), 2)
+                    cv2.putText(raw_frame, "Select Scenario 1-7 in sidebar for demo", (90, 260), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (200, 200, 200), 1)
+                else:
+                    cv2.putText(raw_frame, "WEBCAM CONNECTING...", (130, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 200, 255), 2)
                 pose_result = PoseResult(detected=False)
         else:
             # Release live webcam hardware if running scenario
