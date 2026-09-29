@@ -222,7 +222,13 @@ if "is_monitoring" not in st.session_state:
     st.session_state.is_monitoring = True
 
 if "current_source" not in st.session_state:
-    st.session_state.current_source = "Live Laptop Webcam"
+    # Test if physical camera hardware is present
+    has_cam = st.session_state.camera_mgr.start()
+    if has_cam:
+        st.session_state.current_source = "Live Laptop Webcam (Local Edge)"
+    else:
+        # On cloud server, default to Scenario 5 so judges immediately see the working demo!
+        st.session_state.current_source = "Scenario 5: Sudden Slip & Fall (POSSIBLE FALL)"
 
 # Top Header Hero
 st.markdown("""
@@ -250,25 +256,33 @@ st.markdown("""
 with st.sidebar:
     st.header("🎛️ Edge Station Controls")
     
+    source_options = [
+        "Scenario 5: Sudden Slip & Fall (POSSIBLE FALL)",
+        "Scenario 7: Fall without Recovery (10s Countdown -> EMERGENCY)",
+        "Scenario 1: Person Standing (SAFE)",
+        "Scenario 2: Person Walking (SAFE)",
+        "Scenario 3: Person Sitting Down (SAFE)",
+        "Scenario 4: Intentional Lie Down (SAFE - False Positive Check)",
+        "Scenario 6: Fall with Recovery (RECOVERED)",
+        "Live Laptop Webcam (Local Edge)",
+        "Browser Camera (Client-Side Web/Cloud)"
+    ]
+    
+    default_idx = 0
+    if st.session_state.current_source in source_options:
+        default_idx = source_options.index(st.session_state.current_source)
+
     input_source = st.selectbox(
         "Input Video Stream Source",
-        options=[
-            "Live Laptop Webcam",
-            "Scenario 1: Person Standing (SAFE)",
-            "Scenario 2: Person Walking (SAFE)",
-            "Scenario 3: Person Sitting Down (SAFE)",
-            "Scenario 4: Intentional Lie Down (SAFE - False Positive Check)",
-            "Scenario 5: Sudden Slip & Fall (POSSIBLE FALL)",
-            "Scenario 6: Fall with Recovery (RECOVERED)",
-            "Scenario 7: Fall without Recovery (10s Countdown -> EMERGENCY)"
-        ],
-        index=0
+        options=source_options,
+        index=default_idx
     )
 
     # Detect input source switch
     if input_source != st.session_state.current_source:
         st.session_state.current_source = input_source
         st.session_state.sim_step = 0
+        st.session_state.is_monitoring = True
         st.session_state.state_machine.resolve_emergency()
         st.session_state.fall_detector.reset()
 
@@ -625,92 +639,145 @@ def render_telemetry(new_state, analysis_result, pose_result):
 # ==============================================================================
 if not st.session_state.is_monitoring:
     video_placeholder.info("⏸️ Edge Monitoring Paused. Toggle 'Real-Time Edge Monitoring' in the sidebar to resume.")
-    # Release camera when paused
     if st.session_state.camera_mgr.is_running:
         st.session_state.camera_mgr.stop()
+elif input_source.startswith("Browser Camera"):
+    # Release live hardware webcam if running
+    if st.session_state.camera_mgr.is_running:
+        st.session_state.camera_mgr.stop()
+
+    st.info("📷 **Browser Camera Mode:** Click the shutter button below to capture a frame from your laptop's camera via the browser.")
+    camera_photo = st.camera_input("Take photo for on-demand Edge Fall Analysis")
+    if camera_photo is not None:
+        bytes_data = camera_photo.getvalue()
+        cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
+        if cv2_img is not None:
+            raw_frame = cv2.resize(cv2_img, (sys_config.CAMERA_WIDTH, sys_config.CAMERA_HEIGHT))
+            pose_result = st.session_state.pose_detector.process_frame(raw_frame)
+            analysis_result = st.session_state.fall_detector.analyze(pose_result)
+            new_state = st.session_state.state_machine.update(analysis_result)
+            annotated_frame = st.session_state.visualizer.render(
+                frame=raw_frame,
+                pose=pose_result,
+                analysis=analysis_result,
+                state=new_state,
+                countdown_sec=st.session_state.state_machine.countdown_seconds_remaining,
+                privacy_mode=privacy_mode,
+                anonymize_face=anonymize_face,
+                skeleton_only=skeleton_only
+            )
+            rgb_display = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+            video_placeholder.image(rgb_display, channels="RGB", output_format="JPEG", width="stretch")
+            render_telemetry(new_state, analysis_result, pose_result)
+            update_alert_banner(new_state, st.session_state.state_machine.countdown_seconds_remaining, st.session_state.state_machine.last_confidence)
+    else:
+        info_frame = np.zeros((sys_config.CAMERA_HEIGHT, sys_config.CAMERA_WIDTH, 3), dtype=np.uint8)
+        cv2.rectangle(info_frame, (20, 20), (sys_config.CAMERA_WIDTH - 20, sys_config.CAMERA_HEIGHT - 20), (40, 50, 70), 2)
+        cv2.putText(info_frame, "BROWSER CAMERA READY", (160, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 200, 255), 2)
+        cv2.putText(info_frame, "Click camera button below to take a photo", (110, 255), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (200, 200, 200), 1)
+        video_placeholder.image(cv2.cvtColor(info_frame, cv2.COLOR_BGR2RGB), channels="RGB", output_format="JPEG", width="stretch")
 else:
-    last_banner_state = None
-    last_banner_sec = -1
-    frame_counter = 0
+    # Check if Local Hardware Webcam was requested on a cloud server
+    cam_unavailable_on_cloud = False
+    if input_source.startswith("Live Laptop Webcam"):
+        if not st.session_state.camera_mgr.is_running:
+            started = st.session_state.camera_mgr.start()
+            if not started or not st.session_state.camera_mgr.is_hardware_available:
+                cam_unavailable_on_cloud = True
+                st.warning(
+                    "☁️ **Cloud Deployment Notice: No physical webcam attached to cloud server.**\n\n"
+                    "Streamlit Cloud runs on a remote Linux server without physical cameras attached. A cloud server cannot access your laptop's local camera hardware directly via OpenCV.\n\n"
+                    "**How to test ElderGuard AI right now:**\n"
+                    "1. 👈 **Select a Scenario in the sidebar:** Choose *Scenario 5 (Slip & Fall)* or *Scenario 7 (Fall Emergency)* for instant 30 FPS simulation.\n"
+                    "2. 📷 **Select Browser Camera:** Choose *Browser Camera (Client-Side Web/Cloud)* in the sidebar to test your laptop's camera via the browser.\n"
+                    "3. ⚡ **Run Locally (Edge AI):** In a real Qualcomm Edge setup, run `streamlit run app.py` on your laptop to use the built-in webcam with 100% on-device privacy."
+                )
+                cloud_frame = np.zeros((sys_config.CAMERA_HEIGHT, sys_config.CAMERA_WIDTH, 3), dtype=np.uint8)
+                cv2.rectangle(cloud_frame, (20, 20), (sys_config.CAMERA_WIDTH - 20, sys_config.CAMERA_HEIGHT - 20), (40, 50, 70), 2)
+                cv2.putText(cloud_frame, "ELDERGUARD AI - EDGE AI SYSTEM", (120, 180), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 200, 255), 2)
+                cv2.putText(cloud_frame, "Cloud Server Mode (No Local Camera)", (115, 230), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (255, 255, 255), 1)
+                cv2.putText(cloud_frame, "Select Scenario 1-7 in sidebar to test", (100, 280), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (74, 222, 128), 2)
+                cv2.putText(cloud_frame, "Or select 'Browser Camera' option", (125, 320), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (200, 200, 200), 1)
+                video_placeholder.image(cv2.cvtColor(cloud_frame, cv2.COLOR_BGR2RGB), channels="RGB", output_format="JPEG", width="stretch")
 
-    while st.session_state.is_monitoring:
-        loop_start = time.time()
+    # Run the streaming loop (either local camera or simulated scenarios)
+    if not cam_unavailable_on_cloud and st.session_state.is_monitoring:
+        last_banner_state = None
+        last_banner_sec = -1
+        frame_counter = 0
 
-        # 1. Acquire Frame & Pose Detection
-        if input_source == "Live Laptop Webcam":
-            if not st.session_state.camera_mgr.is_running:
-                st.session_state.camera_mgr.start()
-            success, raw_frame = st.session_state.camera_mgr.read_frame()
-            if raw_frame is not None:
-                pose_result = st.session_state.pose_detector.process_frame(raw_frame)
-            else:
-                raw_frame = np.zeros((sys_config.CAMERA_HEIGHT, sys_config.CAMERA_WIDTH, 3), dtype=np.uint8)
-                if not st.session_state.camera_mgr.is_hardware_available:
-                    cv2.putText(raw_frame, "NO WEBCAM HARDWARE DETECTED", (80, 220), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 200, 255), 2)
-                    cv2.putText(raw_frame, "Select Scenario 1-7 in sidebar for demo", (90, 260), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (200, 200, 200), 1)
+        while st.session_state.is_monitoring:
+            loop_start = time.time()
+
+            # 1. Acquire Frame & Pose Detection
+            if input_source.startswith("Live Laptop Webcam"):
+                success, raw_frame = st.session_state.camera_mgr.read_frame()
+                if raw_frame is not None and success:
+                    pose_result = st.session_state.pose_detector.process_frame(raw_frame)
                 else:
+                    raw_frame = np.zeros((sys_config.CAMERA_HEIGHT, sys_config.CAMERA_WIDTH, 3), dtype=np.uint8)
                     cv2.putText(raw_frame, "WEBCAM CONNECTING...", (130, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 200, 255), 2)
-                pose_result = PoseResult(detected=False)
-        else:
-            # Release live webcam hardware if running scenario
-            if st.session_state.camera_mgr.is_running:
-                st.session_state.camera_mgr.stop()
+                    pose_result = PoseResult(detected=False)
+            else:
+                # Release live webcam hardware if running scenario
+                if st.session_state.camera_mgr.is_running:
+                    st.session_state.camera_mgr.stop()
 
-            scenario_key_map = {
-                "Scenario 1": "1_standing",
-                "Scenario 2": "2_walking",
-                "Scenario 3": "3_sitting",
-                "Scenario 4": "4_lying_down",
-                "Scenario 5": "5_slip_fall",
-                "Scenario 6": "6_fall_recovery",
-                "Scenario 7": "7_fall_emergency"
-            }
-            matched_key = "1_standing"
-            for prefix, key in scenario_key_map.items():
-                if input_source.startswith(prefix):
-                    matched_key = key
-                    break
+                scenario_key_map = {
+                    "Scenario 1": "1_standing",
+                    "Scenario 2": "2_walking",
+                    "Scenario 3": "3_sitting",
+                    "Scenario 4": "4_lying_down",
+                    "Scenario 5": "5_slip_fall",
+                    "Scenario 6": "6_fall_recovery",
+                    "Scenario 7": "7_fall_emergency"
+                }
+                matched_key = "5_slip_fall"
+                for prefix, key in scenario_key_map.items():
+                    if input_source.startswith(prefix):
+                        matched_key = key
+                        break
 
-            st.session_state.sim_step += 1
-            raw_frame, pose_result = st.session_state.scenario_gen.generate_frame(
-                matched_key, st.session_state.sim_step, total_steps=90
+                st.session_state.sim_step += 1
+                raw_frame, pose_result = st.session_state.scenario_gen.generate_frame(
+                    matched_key, st.session_state.sim_step, total_steps=90
+                )
+
+            # 2. Fall Kinematics Biomechanical Analysis
+            analysis_result = st.session_state.fall_detector.analyze(pose_result)
+
+            # 3. Emergency State Machine Transition
+            new_state = st.session_state.state_machine.update(analysis_result)
+
+            # 4. Render Frame Overlay with Privacy & Biomechanical HUD
+            annotated_frame = st.session_state.visualizer.render(
+                frame=raw_frame,
+                pose=pose_result,
+                analysis=analysis_result,
+                state=new_state,
+                countdown_sec=st.session_state.state_machine.countdown_seconds_remaining,
+                privacy_mode=privacy_mode,
+                anonymize_face=anonymize_face,
+                skeleton_only=skeleton_only
             )
 
-        # 2. Fall Kinematics Biomechanical Analysis
-        analysis_result = st.session_state.fall_detector.analyze(pose_result)
+            # 5. Display Frame in Streamlit (In-Place WebSocket Delta, Zero Flicker)
+            rgb_display = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+            video_placeholder.image(rgb_display, channels="RGB", output_format="JPEG", width="stretch")
 
-        # 3. Emergency State Machine Transition
-        new_state = st.session_state.state_machine.update(analysis_result)
+            # 6. Update Alert Banner (Only when state or countdown changes)
+            rem_sec = st.session_state.state_machine.countdown_seconds_remaining
+            if (new_state != last_banner_state) or (rem_sec != last_banner_sec):
+                update_alert_banner(new_state, rem_sec, st.session_state.state_machine.last_confidence)
+                last_banner_state = new_state
+                last_banner_sec = rem_sec
 
-        # 4. Render Frame Overlay with Privacy & Biomechanical HUD
-        annotated_frame = st.session_state.visualizer.render(
-            frame=raw_frame,
-            pose=pose_result,
-            analysis=analysis_result,
-            state=new_state,
-            countdown_sec=st.session_state.state_machine.countdown_seconds_remaining,
-            privacy_mode=privacy_mode,
-            anonymize_face=anonymize_face,
-            skeleton_only=skeleton_only
-        )
+            # 7. Update Telemetry Cards (Every 2 frames for silky smooth metrics without DOM churn)
+            frame_counter += 1
+            if frame_counter % 2 == 0:
+                render_telemetry(new_state, analysis_result, pose_result)
 
-        # 5. Display Frame in Streamlit (In-Place WebSocket Delta, Zero Flicker)
-        rgb_display = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
-        video_placeholder.image(rgb_display, channels="RGB", output_format="JPEG", width="stretch")
-
-        # 6. Update Alert Banner (Only when state or countdown changes)
-        rem_sec = st.session_state.state_machine.countdown_seconds_remaining
-        if (new_state != last_banner_state) or (rem_sec != last_banner_sec):
-            update_alert_banner(new_state, rem_sec, st.session_state.state_machine.last_confidence)
-            last_banner_state = new_state
-            last_banner_sec = rem_sec
-
-        # 7. Update Telemetry Cards (Every 2 frames for silky smooth metrics without DOM churn)
-        frame_counter += 1
-        if frame_counter % 2 == 0:
-            render_telemetry(new_state, analysis_result, pose_result)
-
-        # 8. Adaptive FPS Pacing (~30 FPS target)
-        elapsed = time.time() - loop_start
-        sleep_time = max(0.005, 0.033 - elapsed)
-        time.sleep(sleep_time)
+            # 8. Adaptive FPS Pacing (~30 FPS target)
+            elapsed = time.time() - loop_start
+            sleep_time = max(0.005, 0.033 - elapsed)
+            time.sleep(sleep_time)
