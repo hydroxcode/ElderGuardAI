@@ -95,12 +95,9 @@ class VideoCaptureManager:
             elif self._last_successful_frame is not None:
                 return True, self._last_successful_frame.copy()
 
-        if not self.is_hardware_available:
-            return False, None
-
-        if not self.is_running:
+        if not self.is_hardware_available or not self.is_running:
             dummy = np.zeros((self.height, self.width, 3), dtype=np.uint8)
-            cv2.putText(dummy, "WEBCAM CONNECTING...", (120, self.height // 2 - 10),
+            cv2.putText(dummy, "WEBCAM CONNECTING / STANDBY", (90, self.height // 2 - 10),
                         cv2.FONT_HERSHEY_SIMPLEX, 0.65, (0, 200, 255), 2)
             return False, dummy
 
