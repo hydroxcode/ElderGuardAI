@@ -347,7 +347,12 @@ col_video, col_telemetry = st.columns([1.6, 1.0])
 
 with col_video:
     st.subheader("📹 Live Edge Camera Feed")
-    video_placeholder = st.empty()
+    if input_source.startswith("Browser Camera"):
+        camera_photo = st.camera_input("📷 Browser Camera Viewfinder (Click 'Take Photo' to analyze posture)")
+        video_placeholder = st.empty()
+    else:
+        camera_photo = None
+        video_placeholder = st.empty()
 
     # Contextual Action Bar (Mounted once, always responsive)
     col_act1, col_act2, col_act3 = st.columns(3)
@@ -646,8 +651,6 @@ elif input_source.startswith("Browser Camera"):
     if st.session_state.camera_mgr.is_running:
         st.session_state.camera_mgr.stop()
 
-    st.info("📷 **Browser Camera Mode:** Click the shutter button below to capture a frame from your laptop's camera via the browser.")
-    camera_photo = st.camera_input("Take photo for on-demand Edge Fall Analysis")
     if camera_photo is not None:
         bytes_data = camera_photo.getvalue()
         cv2_img = cv2.imdecode(np.frombuffer(bytes_data, np.uint8), cv2.IMREAD_COLOR)
@@ -667,15 +670,11 @@ elif input_source.startswith("Browser Camera"):
                 skeleton_only=skeleton_only
             )
             rgb_display = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
-            video_placeholder.image(rgb_display, channels="RGB", output_format="JPEG", width="stretch")
+            video_placeholder.image(rgb_display, caption="Analyzed Edge Frame (With Pose Skeleton & Fall Biomechanics HUD)", channels="RGB", output_format="JPEG", width="stretch")
             render_telemetry(new_state, analysis_result, pose_result)
             update_alert_banner(new_state, st.session_state.state_machine.countdown_seconds_remaining, st.session_state.state_machine.last_confidence)
     else:
-        info_frame = np.zeros((sys_config.CAMERA_HEIGHT, sys_config.CAMERA_WIDTH, 3), dtype=np.uint8)
-        cv2.rectangle(info_frame, (20, 20), (sys_config.CAMERA_WIDTH - 20, sys_config.CAMERA_HEIGHT - 20), (40, 50, 70), 2)
-        cv2.putText(info_frame, "BROWSER CAMERA READY", (160, 210), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 200, 255), 2)
-        cv2.putText(info_frame, "Click camera button below to take a photo", (110, 255), cv2.FONT_HERSHEY_SIMPLEX, 0.55, (200, 200, 200), 1)
-        video_placeholder.image(cv2.cvtColor(info_frame, cv2.COLOR_BGR2RGB), channels="RGB", output_format="JPEG", width="stretch")
+        video_placeholder.empty()
 else:
     # Check if Local Hardware Webcam was requested on a cloud server
     cam_unavailable_on_cloud = False
