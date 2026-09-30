@@ -298,11 +298,47 @@ if "sim_step" not in st.session_state:
 if "is_monitoring" not in st.session_state:
     st.session_state.is_monitoring = True
 
-if "current_source" not in st.session_state:
-    st.session_state.current_source = "Live Laptop Webcam"
+STREAM_SOURCES = [
+    "Live Laptop Webcam",
+    "Scenario 1: Person Standing (SAFE)",
+    "Scenario 2: Person Walking (SAFE)",
+    "Scenario 3: Person Sitting Down (SAFE)",
+    "Scenario 4: Intentional Lie Down (SAFE - False Positive Check)",
+    "Scenario 5: Sudden Slip & Fall (POSSIBLE FALL)",
+    "Scenario 6: Fall with Recovery (RECOVERED)",
+    "Scenario 7: Fall without Recovery (10s Countdown -> EMERGENCY)"
+]
+
+if "source_selection" not in st.session_state:
+    st.session_state.source_selection = "Live Laptop Webcam"
+
+def set_stream_source(new_source: str):
+    st.session_state.source_selection = new_source
+    st.session_state.sim_step = 0
+    st.session_state.is_monitoring = True
+    if "state_machine" in st.session_state:
+        st.session_state.state_machine.resolve_emergency()
+    if "fall_detector" in st.session_state:
+        st.session_state.fall_detector.reset()
+
+def on_source_dropdown_change():
+    st.session_state.sim_step = 0
+    st.session_state.is_monitoring = True
+    if "state_machine" in st.session_state:
+        st.session_state.state_machine.resolve_emergency()
+    if "fall_detector" in st.session_state:
+        st.session_state.fall_detector.reset()
+
+def render_clean_html(placeholder, raw_html: str):
+    """
+    Renders raw HTML with 0 leading indentation on all lines.
+    Guarantees CommonMark/Markdown never parses HTML as an indented code block.
+    """
+    cleaned = "\n".join(line.strip() for line in raw_html.splitlines() if line.strip())
+    placeholder.markdown(cleaned, unsafe_allow_html=True)
 
 # Top Header Hero with Qualcomm Snapdragon Edge AI Vitals
-st.markdown("""
+render_clean_html(st, """
 <div class="hero-banner">
 <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
 <div>
@@ -344,7 +380,7 @@ st.markdown("""
 </div>
 </div>
 </div>
-""", unsafe_allow_html=True)
+""")
 
 # Sidebar Configuration & Controls
 with st.sidebar:
@@ -352,25 +388,10 @@ with st.sidebar:
     
     input_source = st.selectbox(
         "Input Video Stream Source",
-        options=[
-            "Live Laptop Webcam",
-            "Scenario 1: Person Standing (SAFE)",
-            "Scenario 2: Person Walking (SAFE)",
-            "Scenario 3: Person Sitting Down (SAFE)",
-            "Scenario 4: Intentional Lie Down (SAFE - False Positive Check)",
-            "Scenario 5: Sudden Slip & Fall (POSSIBLE FALL)",
-            "Scenario 6: Fall with Recovery (RECOVERED)",
-            "Scenario 7: Fall without Recovery (10s Countdown -> EMERGENCY)"
-        ],
-        index=0
+        options=STREAM_SOURCES,
+        key="source_selection",
+        on_change=on_source_dropdown_change
     )
-
-    # Detect input source switch
-    if input_source != st.session_state.current_source:
-        st.session_state.current_source = input_source
-        st.session_state.sim_step = 0
-        st.session_state.state_machine.resolve_emergency()
-        st.session_state.fall_detector.reset()
 
     # Monitoring and Audio Toggles
     monitoring_toggle = st.toggle("🔴 Real-Time Edge Monitoring", value=st.session_state.is_monitoring)
@@ -440,53 +461,17 @@ st.markdown("""
 
 qcol1, qcol2, qcol3, qcol4, qcol5, qcol6 = st.columns(6)
 with qcol1:
-    if st.button("📹 Live Camera", width="stretch", help="Switch to live laptop webcam"):
-        st.session_state.current_source = "Live Laptop Webcam"
-        st.session_state.sim_step = 0
-        st.session_state.is_monitoring = True
-        st.session_state.state_machine.resolve_emergency()
-        st.session_state.fall_detector.reset()
-        st.rerun()
+    st.button("📹 Live Camera", width="stretch", on_click=set_stream_source, args=("Live Laptop Webcam",), help="Switch to live laptop webcam")
 with qcol2:
-    if st.button("🚶 Walk (Safe)", width="stretch", help="Simulate normal walking (SAFE)"):
-        st.session_state.current_source = "Scenario 2: Person Walking (SAFE)"
-        st.session_state.sim_step = 0
-        st.session_state.is_monitoring = True
-        st.session_state.state_machine.resolve_emergency()
-        st.session_state.fall_detector.reset()
-        st.rerun()
+    st.button("🚶 Walk (Safe)", width="stretch", on_click=set_stream_source, args=("Scenario 2: Person Walking (SAFE)",), help="Simulate normal walking (SAFE)")
 with qcol3:
-    if st.button("🪑 Sit (Safe)", width="stretch", help="Simulate slowly sitting down (SAFE)"):
-        st.session_state.current_source = "Scenario 3: Person Sitting Down (SAFE)"
-        st.session_state.sim_step = 0
-        st.session_state.is_monitoring = True
-        st.session_state.state_machine.resolve_emergency()
-        st.session_state.fall_detector.reset()
-        st.rerun()
+    st.button("🪑 Sit (Safe)", width="stretch", on_click=set_stream_source, args=("Scenario 3: Person Sitting Down (SAFE)",), help="Simulate slowly sitting down (SAFE)")
 with qcol4:
-    if st.button("🛌 Bed Rest", width="stretch", help="Simulate lying on sofa/bed (False-Positive Check)"):
-        st.session_state.current_source = "Scenario 4: Intentional Lie Down (SAFE - False Positive Check)"
-        st.session_state.sim_step = 0
-        st.session_state.is_monitoring = True
-        st.session_state.state_machine.resolve_emergency()
-        st.session_state.fall_detector.reset()
-        st.rerun()
+    st.button("🛌 Bed Rest", width="stretch", on_click=set_stream_source, args=("Scenario 4: Intentional Lie Down (SAFE - False Positive Check)",), help="Simulate lying on sofa/bed (False-Positive Check)")
 with qcol5:
-    if st.button("⚠️ Slip & Fall", width="stretch", help="Simulate sudden uncontrolled slip & fall"):
-        st.session_state.current_source = "Scenario 5: Sudden Slip & Fall (POSSIBLE FALL)"
-        st.session_state.sim_step = 0
-        st.session_state.is_monitoring = True
-        st.session_state.state_machine.resolve_emergency()
-        st.session_state.fall_detector.reset()
-        st.rerun()
+    st.button("⚠️ Slip & Fall", width="stretch", on_click=set_stream_source, args=("Scenario 5: Sudden Slip & Fall (POSSIBLE FALL)",), help="Simulate sudden uncontrolled slip & fall")
 with qcol6:
-    if st.button("🚨 Fall + SOS", width="stretch", help="Simulate fall without recovery leading to emergency alert"):
-        st.session_state.current_source = "Scenario 7: Fall without Recovery (10s Countdown -> EMERGENCY)"
-        st.session_state.sim_step = 0
-        st.session_state.is_monitoring = True
-        st.session_state.state_machine.resolve_emergency()
-        st.session_state.fall_detector.reset()
-        st.rerun()
+    st.button("🚨 Fall + SOS", width="stretch", on_click=set_stream_source, args=("Scenario 7: Fall without Recovery (10s Countdown -> EMERGENCY)",), help="Simulate fall without recovery leading to emergency alert")
 
 # Layout Columns: Video Stream (Left) + Telemetry & Profile (Right)
 col_video, col_telemetry = st.columns([1.6, 1.0])
@@ -506,6 +491,8 @@ with col_video:
 
     if btn_im_ok:
         st.session_state.state_machine.trigger_user_im_ok()
+        st.session_state.fall_detector.reset()
+        st.session_state.sim_step = 0
         st.toast("Resident marked SAFE. Countdown cancelled.", icon="✅")
     if btn_sos:
         st.session_state.state_machine.current_state = SystemState.EMERGENCY_CONFIRMED
@@ -521,6 +508,8 @@ with col_video:
         st.toast("🚨 EMERGENCY ALARM TRIGGERED!", icon="🚨")
     if btn_reset:
         st.session_state.state_machine.resolve_emergency()
+        st.session_state.fall_detector.reset()
+        st.session_state.sim_step = 0
         st.toast("System status reset to SAFE.", icon="🟢")
 
 with col_telemetry:
@@ -529,7 +518,7 @@ with col_telemetry:
     telemetry_metrics_placeholder = st.empty()
 
     # Resident Monitoring Profile Card (Rendered once, fixed)
-    st.markdown(f"""
+    render_clean_html(st, f"""
     <div class="telemetry-card">
         <div class="telemetry-label">RESIDENT MONITORING PROFILE</div>
         <div style="margin-top: 6px; font-size: 13px;">
@@ -539,7 +528,7 @@ with col_telemetry:
             <b>Cloud Streaming:</b> <span style="color: #4ade80;">Disabled (100% Local Inference)</span>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
 # Tabs below for History, Qualcomm Architecture, Biomechanical Diagnostics & Smart Home Map
 st.markdown("---")
@@ -770,7 +759,7 @@ Resident <b>{sys_config.DEFAULT_RESIDENT}</b> unassisted for 10s countdown. Zero
 def update_alert_banner(current_state, remaining_sec, confidence):
     if current_state == SystemState.EMERGENCY_CONFIRMED:
         st.session_state.audio_mgr.play_emergency_siren()
-        alert_banner_placeholder.markdown(f"""
+        render_clean_html(alert_banner_placeholder, f"""
         <div class="alert-emergency">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -788,10 +777,10 @@ def update_alert_banner(current_state, remaining_sec, confidence):
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
     elif current_state == SystemState.VERIFYING:
         st.session_state.audio_mgr.play_warning_chime()
-        alert_banner_placeholder.markdown(f"""
+        render_clean_html(alert_banner_placeholder, f"""
         <div class="alert-verifying">
             <div style="display: flex; justify-content: space-between; align-items: center;">
                 <div>
@@ -805,7 +794,7 @@ def update_alert_banner(current_state, remaining_sec, confidence):
                 </div>
             </div>
         </div>
-        """, unsafe_allow_html=True)
+        """)
     else:
         alert_banner_placeholder.empty()
 
@@ -820,13 +809,13 @@ def render_telemetry(new_state, analysis_result, pose_result):
     }
     s_col, s_txt = state_color_map.get(new_state, ("#94a3b8", "UNKNOWN"))
 
-    telemetry_state_placeholder.markdown(f"""
+    render_clean_html(telemetry_state_placeholder, f"""
     <div class="telemetry-card" style="border-left: 5px solid {s_col};">
         <div class="telemetry-label">CURRENT SYSTEM STATE</div>
         <div class="telemetry-value" style="color: {s_col};">{s_txt}</div>
         <div style="font-size: 12px; color: #94a3b8; margin-top: 4px;">{st.session_state.state_machine.state_message}</div>
     </div>
-    """, unsafe_allow_html=True)
+    """)
 
     raw_act = getattr(analysis_result, "raw_activity", analysis_result.activity)
     track_score = int(pose_result.confidence * 100) if pose_result.detected else 0
@@ -873,7 +862,7 @@ def render_telemetry(new_state, analysis_result, pose_result):
 
     # Smart Dispatch Automation Status Card
     if new_state == SystemState.EMERGENCY_CONFIRMED:
-        dispatch_html = f"""
+        dispatch_html = """
         <div class="telemetry-card" style="border: 2px solid #ef4444; background: rgba(239, 68, 68, 0.12); margin-top: 10px;">
             <div class="telemetry-label" style="color: #ef4444;">🚨 AUTOMATED EMERGENCY DISPATCH PROTOCOL</div>
             <div style="font-size: 12.5px; margin-top: 6px; line-height: 1.6;">
@@ -897,7 +886,7 @@ def render_telemetry(new_state, analysis_result, pose_result):
         </div>
         """
     else:
-        dispatch_html = f"""
+        dispatch_html = """
         <div class="telemetry-card" style="border-left: 4px solid #10b981; margin-top: 10px;">
             <div class="telemetry-label">AUTOMATED SMART DISPATCH (MATTER / BLE)</div>
             <div style="font-size: 11.5px; margin-top: 4px; color: #94a3b8; display: flex; justify-content: space-between;">
@@ -908,7 +897,7 @@ def render_telemetry(new_state, analysis_result, pose_result):
         </div>
         """
 
-    telemetry_metrics_placeholder.markdown(f"""
+    full_telemetry = f"""
     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
         <div class="telemetry-card">
             <div class="telemetry-label">FALL CONFIDENCE</div>
@@ -960,7 +949,8 @@ def render_telemetry(new_state, analysis_result, pose_result):
         </div>
     </div>
     {dispatch_html}
-    """, unsafe_allow_html=True)
+    """
+    render_clean_html(telemetry_metrics_placeholder, full_telemetry)
 
 
 # ==============================================================================
@@ -980,7 +970,8 @@ else:
         loop_start = time.time()
 
         # 1. Acquire Frame & Pose Detection
-        if input_source == "Live Laptop Webcam":
+        active_source = st.session_state.get("source_selection", "Live Laptop Webcam")
+        if active_source == "Live Laptop Webcam":
             if not st.session_state.camera_mgr.is_running:
                 st.session_state.camera_mgr.start()
             success, raw_frame = st.session_state.camera_mgr.read_frame()
@@ -1010,7 +1001,7 @@ else:
             }
             matched_key = "1_standing"
             for prefix, key in scenario_key_map.items():
-                if input_source.startswith(prefix):
+                if active_source.startswith(prefix):
                     matched_key = key
                     break
 
