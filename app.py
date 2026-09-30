@@ -304,46 +304,45 @@ if "current_source" not in st.session_state:
 # Top Header Hero with Qualcomm Snapdragon Edge AI Vitals
 st.markdown("""
 <div class="hero-banner">
-    <div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
-        <div>
-            <h1 class="hero-title">🛡️ ELDERGUARD AI</h1>
-            <p class="hero-tagline">Autonomous Privacy-Preserving Edge AI for Elderly Fall Detection & Smart Emergency Dispatch</p>
-            <div class="badge-container">
-                <span class="edge-badge badge-green">🟢 MONITORING: ACTIVE</span>
-                <span class="edge-badge badge-blue">🔒 ZERO CLOUD LEAKAGE (AIR-GAPPED)</span>
-                <span class="edge-badge badge-red">⚡ QUALCOMM SNAPDRAGON NPU</span>
-                <span class="edge-badge badge-purple">📡 MATTER / BLE MESH: ARMED</span>
-            </div>
-        </div>
-        <div style="text-align: right; margin-top: 5px;">
-            <span style="font-size: 13px; font-weight: 700; color: #f8fafc;">Navonmesh 26 • PS-06</span><br>
-            <span style="font-size: 11px; color: #38bdf8; font-weight: 600;">In Collaboration with Qualcomm</span>
-        </div>
-    </div>
-    
-    <!-- Real-Time Hardware Vitals Ribbon -->
-    <div class="npu-ribbon">
-        <div class="npu-vital">
-            <div class="npu-vital-label">NPU Accelerator</div>
-            <div class="npu-vital-val">Qualcomm Hexagon</div>
-        </div>
-        <div class="npu-vital">
-            <div class="npu-vital-label">Inference Latency</div>
-            <div class="npu-vital-val" style="color: #4ade80;">14.2 ms (INT8)</div>
-        </div>
-        <div class="npu-vital">
-            <div class="npu-vital-label">Edge Throughput</div>
-            <div class="npu-vital-val" style="color: #38bdf8;">30.0 FPS</div>
-        </div>
-        <div class="npu-vital">
-            <div class="npu-vital-label">Power Profile</div>
-            <div class="npu-vital-val" style="color: #facc15;">&lt; 2.2W (Ultra-Low)</div>
-        </div>
-        <div class="npu-vital">
-            <div class="npu-vital-label">Cloud Video Uplink</div>
-            <div class="npu-vital-val" style="color: #4ade80;">0.00 B/s (100% Local)</div>
-        </div>
-    </div>
+<div style="display: flex; justify-content: space-between; align-items: flex-start; flex-wrap: wrap;">
+<div>
+<h1 class="hero-title">🛡️ ELDERGUARD AI</h1>
+<p class="hero-tagline">Autonomous Privacy-Preserving Edge AI for Elderly Fall Detection & Smart Emergency Dispatch</p>
+<div class="badge-container">
+<span class="edge-badge badge-green">🟢 MONITORING: ACTIVE</span>
+<span class="edge-badge badge-blue">🔒 ZERO CLOUD LEAKAGE (AIR-GAPPED)</span>
+<span class="edge-badge badge-red">⚡ QUALCOMM SNAPDRAGON NPU</span>
+<span class="edge-badge badge-purple">📡 MATTER / BLE MESH: ARMED</span>
+</div>
+</div>
+<div style="text-align: right; margin-top: 5px;">
+<span style="font-size: 13px; font-weight: 700; color: #f8fafc;">Navonmesh 26 • PS-06</span><br>
+<span style="font-size: 11px; color: #38bdf8; font-weight: 600;">In Collaboration with Qualcomm</span>
+</div>
+</div>
+
+<div class="npu-ribbon">
+<div class="npu-vital">
+<div class="npu-vital-label">NPU Accelerator</div>
+<div class="npu-vital-val">Qualcomm Hexagon</div>
+</div>
+<div class="npu-vital">
+<div class="npu-vital-label">Inference Latency</div>
+<div class="npu-vital-val" style="color: #4ade80;">14.2 ms (INT8)</div>
+</div>
+<div class="npu-vital">
+<div class="npu-vital-label">Edge Throughput</div>
+<div class="npu-vital-val" style="color: #38bdf8;">30.0 FPS</div>
+</div>
+<div class="npu-vital">
+<div class="npu-vital-label">Power Profile</div>
+<div class="npu-vital-val" style="color: #facc15;">&lt; 2.2W (Ultra-Low)</div>
+</div>
+<div class="npu-vital">
+<div class="npu-vital-label">Cloud Video Uplink</div>
+<div class="npu-vital-val" style="color: #4ade80;">0.00 B/s (100% Local)</div>
+</div>
+</div>
 </div>
 """, unsafe_allow_html=True)
 
@@ -687,91 +686,84 @@ with tab_smart_home:
     with col_map:
         st.markdown("#### 🗺️ Resident Domestic Sensor Zone Coverage")
         st.markdown(f"""
-        <div style="background: #0d131f; border: 1px solid #1e293b; border-radius: 12px; padding: 18px; text-align: center;">
-            <svg viewBox="0 0 600 340" style="width: 100%; height: auto; max-height: 320px; font-family: 'Inter', sans-serif;">
-                <!-- Apartment Outer Boundary -->
-                <rect x="20" y="20" width="560" height="300" rx="8" fill="#131c2e" stroke="#334155" stroke-width="2"/>
-                
-                <!-- Living Room (Active Monitoring Zone) -->
-                <rect x="30" y="30" width="320" height="280" rx="6" fill="#1a253a" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4"/>
-                <text x="45" y="60" fill="#38bdf8" font-size="14" font-weight="700">LIVING ROOM — ZONE A</text>
-                <text x="45" y="80" fill="#94a3b8" font-size="11">Smart Camera Node #1 (Qualcomm Edge Active)</text>
-                
-                <!-- Camera Sensor Field of View Cone -->
-                <polygon points="40,40 180,180 320,80" fill="rgba(56, 189, 248, 0.08)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1"/>
-                <circle cx="45" cy="45" r="8" fill="#0284c7"/>
-                <circle cx="45" cy="45" r="4" fill="#ffffff"/>
-                
-                <!-- Resident Marker -->
-                <circle cx="190" cy="180" r="14" fill="rgba(34, 197, 94, 0.2)"/>
-                <circle cx="190" cy="180" r="8" fill="#22c55e">
-                    <animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite"/>
-                </circle>
-                <text x="165" y="210" fill="#f8fafc" font-size="11" font-weight="600">{sys_config.DEFAULT_RESIDENT}</text>
-                
-                <!-- Bedroom -->
-                <rect x="360" y="30" width="210" height="135" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
-                <text x="375" y="60" fill="#94a3b8" font-size="12" font-weight="600">BEDROOM — ZONE B</text>
-                <text x="375" y="78" fill="#64748b" font-size="10">Standby Optical Node</text>
-                
-                <!-- Kitchen & Bathroom -->
-                <rect x="360" y="175" width="100" height="135" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
-                <text x="370" y="200" fill="#94a3b8" font-size="11" font-weight="600">KITCHEN</text>
-                <text x="370" y="216" fill="#64748b" font-size="9">Zone C</text>
-                
-                <rect x="470" y="175" width="100" height="135" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
-                <text x="480" y="200" fill="#94a3b8" font-size="11" font-weight="600">BATHROOM</text>
-                <text x="480" y="216" fill="#64748b" font-size="9">Radar Sensor</text>
-                
-                <!-- Front Door Matter Lock -->
-                <rect x="25" y="140" width="10" height="40" fill="#f59e0b" rx="2"/>
-                <text x="45" y="165" fill="#f59e0b" font-size="10" font-weight="700">MATTER SMART LOCK</text>
-            </svg>
-            <div style="display: flex; justify-content: space-around; font-size: 11px; color: #94a3b8; margin-top: 10px;">
-                <span>🟢 Camera Coverage: <b>100% Living Area</b></span>
-                <span>🚪 Smart Lock: <b>Auto-Unlock for EMTs</b></span>
-                <span>📶 Matter Protocol: <b>Thread Mesh Online</b></span>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+<div style="background: #0d131f; border: 1px solid #1e293b; border-radius: 12px; padding: 18px; text-align: center;">
+<svg viewBox="0 0 600 340" style="width: 100%; height: auto; max-height: 320px; font-family: 'Inter', sans-serif;">
+<!-- Apartment Outer Boundary -->
+<rect x="20" y="20" width="560" height="300" rx="8" fill="#131c2e" stroke="#334155" stroke-width="2"/>
+<!-- Living Room (Active Monitoring Zone) -->
+<rect x="30" y="30" width="320" height="280" rx="6" fill="#1a253a" stroke="#38bdf8" stroke-width="1.5" stroke-dasharray="4"/>
+<text x="45" y="60" fill="#38bdf8" font-size="14" font-weight="700">LIVING ROOM — ZONE A</text>
+<text x="45" y="80" fill="#94a3b8" font-size="11">Smart Camera Node #1 (Qualcomm Edge Active)</text>
+<!-- Camera Sensor Field of View Cone -->
+<polygon points="40,40 180,180 320,80" fill="rgba(56, 189, 248, 0.08)" stroke="rgba(56, 189, 248, 0.3)" stroke-width="1"/>
+<circle cx="45" cy="45" r="8" fill="#0284c7"/>
+<circle cx="45" cy="45" r="4" fill="#ffffff"/>
+<!-- Resident Marker -->
+<circle cx="190" cy="180" r="14" fill="rgba(34, 197, 94, 0.2)"/>
+<circle cx="190" cy="180" r="8" fill="#22c55e">
+<animate attributeName="r" values="8;12;8" dur="2s" repeatCount="indefinite"/>
+</circle>
+<text x="165" y="210" fill="#f8fafc" font-size="11" font-weight="600">{sys_config.DEFAULT_RESIDENT}</text>
+<!-- Bedroom -->
+<rect x="360" y="30" width="210" height="135" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+<text x="375" y="60" fill="#94a3b8" font-size="12" font-weight="600">BEDROOM — ZONE B</text>
+<text x="375" y="78" fill="#64748b" font-size="10">Standby Optical Node</text>
+<!-- Kitchen & Bathroom -->
+<rect x="360" y="175" width="100" height="135" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+<text x="370" y="200" fill="#94a3b8" font-size="11" font-weight="600">KITCHEN</text>
+<text x="370" y="216" fill="#64748b" font-size="9">Zone C</text>
+<rect x="470" y="175" width="100" height="135" rx="6" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+<text x="480" y="200" fill="#94a3b8" font-size="11" font-weight="600">BATHROOM</text>
+<text x="480" y="216" fill="#64748b" font-size="9">Radar Sensor</text>
+<!-- Front Door Matter Lock -->
+<rect x="25" y="140" width="10" height="40" fill="#f59e0b" rx="2"/>
+<text x="45" y="165" fill="#f59e0b" font-size="10" font-weight="700">MATTER SMART LOCK</text>
+</svg>
+<div style="display: flex; justify-content: space-around; font-size: 11px; color: #94a3b8; margin-top: 10px;">
+<span>🟢 Camera Coverage: <b>100% Living Area</b></span>
+<span>🚪 Smart Lock: <b>Auto-Unlock for EMTs</b></span>
+<span>📶 Matter Protocol: <b>Thread Mesh Online</b></span>
+</div>
+</div>
+""", unsafe_allow_html=True)
 
     with col_phone:
         st.markdown("#### 📱 Caregiver Mobile Lockscreen Simulation")
         st.markdown(f"""
-        <div style="background: #0f172a; border: 2px solid #334155; border-radius: 20px; padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; margin-bottom: 12px;">
-                <span style="font-size: 11px; color: #94a3b8; font-weight: 600;">9:41 AM</span>
-                <span style="font-size: 11px; color: #4ade80; font-weight: 700;">5G • EMERGENCY MESH</span>
-            </div>
-            
-            <div style="background: rgba(220, 38, 38, 0.15); border: 1.5px solid #ef4444; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
-                <div style="display: flex; justify-content: space-between; align-items: center;">
-                    <div style="display: flex; align-items: center; gap: 6px;">
-                        <span style="font-size: 14px;">🛡️</span>
-                        <span style="font-size: 12px; font-weight: 800; color: #f8fafc;">ELDERGUARD AI</span>
-                    </div>
-                    <span style="font-size: 10px; color: #fca5a5; font-weight: 600;">NOW</span>
-                </div>
-                <div style="font-size: 13px; font-weight: 700; color: #fca5a5; margin-top: 6px;">
-                    CRITICAL: Confirmed Fall in Living Room
-                </div>
-                <div style="font-size: 11.5px; color: #e2e8f0; margin-top: 4px; line-height: 1.4;">
-                    Resident <b>{sys_config.DEFAULT_RESIDENT}</b> unassisted for 10s countdown. Zero cloud video transmitted. Paramedic entry token dispatched.
-                </div>
-            </div>
+<div style="background: #0f172a; border: 2px solid #334155; border-radius: 20px; padding: 18px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);">
+<div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.08); padding-bottom: 8px; margin-bottom: 12px;">
+<span style="font-size: 11px; color: #94a3b8; font-weight: 600;">9:41 AM</span>
+<span style="font-size: 11px; color: #4ade80; font-weight: 700;">5G • EMERGENCY MESH</span>
+</div>
 
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: #38bdf8;">
-                    📞 Direct Acoustic Voice Intercom
-                </div>
-                <div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: #4ade80;">
-                    🔓 Verify Matter Smart Lock: UNLOCKED
-                </div>
-                <div style="background: #7f1d1d; border: 1px solid #ef4444; border-radius: 8px; padding: 8px; text-align: center; font-size: 12px; font-weight: 700; color: #ffffff;">
-                    🚑 Dispatch Emergency Paramedics (911)
-                </div>
-            </div>
-        </div>
+<div style="background: rgba(220, 38, 38, 0.15); border: 1.5px solid #ef4444; border-radius: 12px; padding: 12px; margin-bottom: 12px;">
+<div style="display: flex; justify-content: space-between; align-items: center;">
+<div style="display: flex; align-items: center; gap: 6px;">
+<span style="font-size: 14px;">🛡️</span>
+<span style="font-size: 12px; font-weight: 800; color: #f8fafc;">ELDERGUARD AI</span>
+</div>
+<span style="font-size: 10px; color: #fca5a5; font-weight: 600;">NOW</span>
+</div>
+<div style="font-size: 13px; font-weight: 700; color: #fca5a5; margin-top: 6px;">
+CRITICAL: Confirmed Fall in Living Room
+</div>
+<div style="font-size: 11.5px; color: #e2e8f0; margin-top: 4px; line-height: 1.4;">
+Resident <b>{sys_config.DEFAULT_RESIDENT}</b> unassisted for 10s countdown. Zero cloud video transmitted. Paramedic entry token dispatched.
+</div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 8px;">
+<div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: #38bdf8;">
+📞 Direct Acoustic Voice Intercom
+</div>
+<div style="background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 8px; text-align: center; font-size: 12px; font-weight: 600; color: #4ade80;">
+🔓 Verify Matter Smart Lock: UNLOCKED
+</div>
+<div style="background: #7f1d1d; border: 1px solid #ef4444; border-radius: 8px; padding: 8px; text-align: center; font-size: 12px; font-weight: 700; color: #ffffff;">
+🚑 Dispatch Emergency Paramedics (911)
+</div>
+</div>
+</div>
         """, unsafe_allow_html=True)
 
 # Helper: Update Alert Banner In-Place
